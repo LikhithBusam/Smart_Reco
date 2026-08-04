@@ -1,0 +1,46 @@
+# Web framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# LLM access (Mesh API — OpenAI-compatible gateway)
+openai==1.59.6
+
+# Settings / config
+pydantic==2.10.4
+pydantic-settings==2.7.1
+email-validator==2.2.0
+
+# Database
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+
+# Cache / queue
+redis==5.2.1
+
+# Auth
+bcrypt==4.2.1
+pyjwt==2.10.1
+
+# Vector DB
+chromadb==0.5.23
+
+# Agent framework
+langgraph==0.2.62
+langchain-core==0.3.28
+
+# Observability
+langsmith==0.2.10
+
+# Scheduler
+apscheduler==3.11.0
+
+# Templates
+jinja2==3.1.5
+python-multipart==0.0.20
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.25.1
+httpx==0.28.1
+aiosqlite==0.20.0
