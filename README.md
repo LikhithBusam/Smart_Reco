@@ -8,7 +8,7 @@ Behavioral AI recommendation platform for the SmartReco Build Challenge 2026.
 
 - [x] Phase 1 — Foundation: Docker Compose, FastAPI skeleton, SQLAlchemy models + Alembic, email/password auth (JWT via httpOnly cookie), role-guarded routes
 - [x] Phase 2 — Product management + outbox: admin CRUD, `product_sync_outbox`, Chroma client (embeddings via Mesh API only), outbox worker
-- [ ] Phase 3 — Event tracking
+- [x] Phase 3 — Event tracking: `tracker.js`, `/api/events/batch`, Redis buffering, batch-flush consumer
 - [ ] Phase 4 — Agent core (LangGraph)
 - [ ] Phase 5 — Recommendations API + frontend
 - [ ] Phase 6 — Bonuses (LangSmith, digest email, retrieval polish)

@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     trigger_event_threshold: int = 5
     recommendation_ttl_hours: int = 6
     outbox_poll_interval_seconds: int = 5
+    event_consumer_poll_interval_seconds: int = 3
 
     langchain_tracing_v2: bool = False
     langchain_api_key: str = ""
