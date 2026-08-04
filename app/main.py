@@ -1,11 +1,23 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
-from app.api import admin, auth
+from app.api import admin, auth, products
+from app.services.scheduler import start_scheduler, stop_scheduler
 
-app = FastAPI(title="SmartReco")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    start_scheduler()
+    yield
+    stop_scheduler()
+
+
+app = FastAPI(title="SmartReco", lifespan=lifespan)
 
 app.include_router(auth.router)
 app.include_router(admin.router)
+app.include_router(products.router)
 
 
 @app.get("/health")
