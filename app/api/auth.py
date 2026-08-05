@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.deps import get_current_user
+from app.core.rate_limit import login_rate_limit
 from app.core.security import (
     ACCESS_TOKEN_COOKIE_NAME,
     create_access_token,
@@ -43,7 +44,7 @@ async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db))
     return user
 
 
-@router.post("/login", response_model=UserResponse)
+@router.post("/login", response_model=UserResponse, dependencies=[Depends(login_rate_limit)])
 async def login(payload: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)) -> User:
     user = (await db.execute(select(User).where(User.email == payload.email))).scalar_one_or_none()
     if user is None or not verify_password(payload.password, user.hashed_password):

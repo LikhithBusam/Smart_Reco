@@ -4,7 +4,10 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.api import admin, auth, events, pages, products, recommendations
+from app.logging_config import configure_logging
 from app.services.scheduler import start_scheduler, stop_scheduler
+
+configure_logging()
 
 
 @asynccontextmanager

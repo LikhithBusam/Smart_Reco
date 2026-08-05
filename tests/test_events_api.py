@@ -27,7 +27,10 @@ def authed_user():
 
 @pytest.mark.asyncio
 async def test_batch_events_returns_202_and_pushes_to_redis_with_user_id(fake_redis, authed_user):
-    with patch("app.api.events.get_redis", return_value=fake_redis):
+    with (
+        patch("app.api.events.get_redis", return_value=fake_redis),
+        patch("app.core.rate_limit.get_redis", return_value=fake_redis),
+    ):
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post(
@@ -50,18 +53,20 @@ async def test_batch_events_returns_202_and_pushes_to_redis_with_user_id(fake_re
 
 
 @pytest.mark.asyncio
-async def test_batch_events_requires_authentication():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.post("/api/events/batch", json={"events": [{"event_type": "view"}]})
+async def test_batch_events_requires_authentication(fake_redis):
+    with patch("app.core.rate_limit.get_redis", return_value=fake_redis):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post("/api/events/batch", json={"events": [{"event_type": "view"}]})
 
     assert response.status_code == 401
 
 
 @pytest.mark.asyncio
-async def test_batch_events_rejects_empty_batch(authed_user):
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.post("/api/events/batch", json={"events": []})
+async def test_batch_events_rejects_empty_batch(fake_redis, authed_user):
+    with patch("app.core.rate_limit.get_redis", return_value=fake_redis):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post("/api/events/batch", json={"events": []})
 
     assert response.status_code == 422

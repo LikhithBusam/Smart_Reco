@@ -3,6 +3,7 @@ import json
 from fastapi import APIRouter, Depends, Response, status
 
 from app.core.deps import get_current_user
+from app.core.rate_limit import events_rate_limit
 from app.db.models import User
 from app.schemas.event import EventBatchRequest
 from app.services.redis_client import EVENTS_QUEUE_KEY, get_redis
@@ -10,7 +11,7 @@ from app.services.redis_client import EVENTS_QUEUE_KEY, get_redis
 router = APIRouter(prefix="/api/events", tags=["events"])
 
 
-@router.post("/batch", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/batch", status_code=status.HTTP_202_ACCEPTED, dependencies=[Depends(events_rate_limit)])
 async def batch_events(
     payload: EventBatchRequest,
     user: User = Depends(get_current_user),
