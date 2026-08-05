@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Register – SmartReco{% endblock %}
+{% block content %}
+<h1>Create an account</h1>
+<form id="auth-form" class="auth-form">
+  <p><input type="email" name="email" placeholder="Email" required autofocus></p>
+  <p><input type="password" name="password" placeholder="Password (min 8 characters)" minlength="8" required></p>
+  <p><button type="submit">Register</button></p>
+  <p class="error" id="auth-error"></p>
+</form>
+<p>Already have an account? <a href="/login">Log in</a></p>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('auth-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const form = new FormData(e.target);
+  const credentials = { email: form.get('email'), password: form.get('password') };
+
+  const registerRes = await fetch('/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials),
+  });
+  if (!registerRes.ok) {
+    const body = await registerRes.json().catch(function () { return {}; });
+    document.getElementById('auth-error').textContent = body.detail || 'Registration failed';
+    return;
+  }
+
+  const loginRes = await fetch('/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials),
+  });
+  window.location.href = loginRes.ok ? '/' : '/login';
+});
+</script>
+{% endblock %}

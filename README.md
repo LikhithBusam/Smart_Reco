@@ -10,7 +10,7 @@ Behavioral AI recommendation platform for the SmartReco Build Challenge 2026.
 - [x] Phase 2 — Product management + outbox: admin CRUD, `product_sync_outbox`, Chroma client (embeddings via Mesh API only), outbox worker
 - [x] Phase 3 — Event tracking: `tracker.js`, `/api/events/batch`, Redis buffering, batch-flush consumer
 - [x] Phase 4 — Agent core: LangGraph graph (trigger → analyze → retrieve → evaluate → refine? → generate → persist), concurrency lock, grounding filter, interest-summary cache
-- [ ] Phase 5 — Recommendations API + frontend
+- [x] Phase 5 — Recommendations API + frontend: `GET /api/recommendations` (joins stored recommendation with product details, fires async regen), login/register/home pages (Jinja2 + vanilla JS, tracker-instrumented product browsing with server-side search)
 - [ ] Phase 6 — Bonuses (LangSmith, digest email, retrieval polish)
 - [ ] Phase 7 — Hardening (full README, setup instructions, rate limiting)
 

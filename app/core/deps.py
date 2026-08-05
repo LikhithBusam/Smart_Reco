@@ -15,21 +15,26 @@ CREDENTIALS_ERROR = HTTPException(
 )
 
 
-async def get_current_user(
-    request: Request,
-    db: AsyncSession = Depends(get_db),
-) -> User:
+async def get_current_user_optional(request: Request, db: AsyncSession) -> User | None:
+    """For page routes that redirect instead of returning a 401 JSON error."""
     token = request.cookies.get(ACCESS_TOKEN_COOKIE_NAME)
     if not token:
-        raise CREDENTIALS_ERROR
+        return None
 
     try:
         payload = decode_access_token(token)
         user_id = UUID(payload["sub"])
     except (jwt.PyJWTError, KeyError, ValueError):
-        raise CREDENTIALS_ERROR
+        return None
 
-    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    return (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+
+
+async def get_current_user(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    user = await get_current_user_optional(request, db)
     if user is None:
         raise CREDENTIALS_ERROR
     return user

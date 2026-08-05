@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SmartReco{% endblock %}</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+    nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    nav a { text-decoration: none; color: inherit; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+    .narrative { background: #f5f3ff; border-left: 4px solid #7c5cff; padding: 1rem; margin-bottom: 1.5rem; border-radius: 4px; }
+    .narrative h2 { margin-top: 0; font-size: 1rem; text-transform: uppercase; letter-spacing: .05em; color: #7c5cff; }
+    input, button { padding: .5rem; font-size: 1rem; }
+    form.search { margin-bottom: 1.5rem; display: flex; gap: .5rem; }
+    form.search input { flex: 1; }
+    .price { color: #555; font-size: .9rem; }
+    .error { color: #c0392b; }
+    .auth-form p { margin: .75rem 0; }
+    .auth-form input { width: 100%; box-sizing: border-box; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/"><strong>SmartReco</strong></a>
+    <div>{% block nav_right %}{% endblock %}</div>
+  </nav>
+  {% block content %}{% endblock %}
+  <script src="/static/js/tracker.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

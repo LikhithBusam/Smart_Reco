@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}SmartReco{% endblock %}
+{% block nav_right %}
+<span>{{ user.email }}</span>
+<form id="logout-form" style="display:inline">
+  <button type="submit">Log out</button>
+</form>
+{% endblock %}
+{% block content %}
+<div id="recommendation" class="narrative" style="display:none">
+  <h2>Recommended for you</h2>
+  <p id="rec-narrative"></p>
+  <div id="rec-products" class="grid"></div>
+</div>
+
+<form class="search" method="get" action="/" id="search-form">
+  <input type="text" name="q" value="{{ query or '' }}" placeholder="Search courses...">
+  <button type="submit">Search</button>
+</form>
+
+<div class="grid">
+  {% for p in products %}
+  <div class="card" data-product-id="{{ p.id }}" data-category="{{ p.category }}">
+    <h3>{{ p.title }}</h3>
+    <p>{{ p.description | truncate(120) }}</p>
+    <p class="price">{{ p.category }} &middot; ${{ p.price }}</p>
+    <button class="view-btn" data-product-id="{{ p.id }}" data-category="{{ p.category }}">View details</button>
+  </div>
+  {% else %}
+  <p>No products found.</p>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+// A "view" for every product actually shown in this result set.
+document.querySelectorAll('.card[data-product-id]').forEach(function (el) {
+  SmartRecoTracker.trackView('product', el.dataset.productId, { category: el.dataset.category });
+});
+
+document.querySelectorAll('.view-btn').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    SmartRecoTracker.trackClick('product', btn.dataset.productId, { category: btn.dataset.category });
+  });
+});
+
+document.getElementById('search-form').addEventListener('submit', function () {
+  if (this.q.value) SmartRecoTracker.trackSearch(this.q.value);
+});
+
+document.getElementById('logout-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  await fetch('/auth/logout', { method: 'POST' });
+  window.location.href = '/login';
+});
+
+fetch('/api/recommendations', { credentials: 'same-origin' })
+  .then(function (r) { return r.ok ? r.json() : null; })
+  .then(function (data) {
+    if (!data || !data.narrative) return;
+    document.getElementById('rec-narrative').textContent = data.narrative;
+    const container = document.getElementById('rec-products');
+    data.products.forEach(function (p) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const title = document.createElement('h4');
+      title.textContent = p.title;
+      const price = document.createElement('p');
+      price.className = 'price';
+      price.textContent = p.category + ' · $' + p.price;
+      card.appendChild(title);
+      card.appendChild(price);
+      container.appendChild(card);
+    });
+    document.getElementById('recommendation').style.display = 'block';
+  })
+  .catch(function () {});
+</script>
+{% endblock %}
