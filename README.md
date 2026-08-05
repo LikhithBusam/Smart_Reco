@@ -11,7 +11,7 @@ Behavioral AI recommendation platform for the SmartReco Build Challenge 2026.
 - [x] Phase 3 — Event tracking: `tracker.js`, `/api/events/batch`, Redis buffering, batch-flush consumer
 - [x] Phase 4 — Agent core: LangGraph graph (trigger → analyze → retrieve → evaluate → refine? → generate → persist), concurrency lock, grounding filter, interest-summary cache
 - [x] Phase 5 — Recommendations API + frontend: `GET /api/recommendations` (joins stored recommendation with product details, fires async regen), login/register/home pages (Jinja2 + vanilla JS, tracker-instrumented product browsing with server-side search)
-- [ ] Phase 6 — Bonuses (LangSmith, digest email, retrieval polish)
+- [x] Phase 6 — Bonuses: LangSmith tracing (env-driven, no wrapper code), `GET /admin/agent-runs` observability endpoint, daily digest email job (reuses existing recommendations, never forces a regen), retrieval polish (Chroma metadata filtering by inferred dominant category, dropped on refine to broaden)
 - [ ] Phase 7 — Hardening (full README, setup instructions, rate limiting)
 
 A complete setup/run guide and architecture writeup will land here in Phase 7.

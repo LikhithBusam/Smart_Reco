@@ -36,6 +36,55 @@ def test_refine_query_increments_retry_count():
     assert nodes.refine_query({"retry_count": 1}) == {"retry_count": 2}
 
 
+# ---- retrieval polish: category-filter inference ----
+
+
+def test_infer_category_filter_none_with_fewer_than_two_samples():
+    events = [{"metadata": {"category": "ai"}}]
+    assert nodes._infer_category_filter(events) is None
+
+
+def test_infer_category_filter_returns_dominant_category_at_clear_majority():
+    events = [{"metadata": {"category": "ai"}}] * 3 + [{"metadata": {"category": "design"}}]
+    assert nodes._infer_category_filter(events) == {"category": "ai"}
+
+
+def test_infer_category_filter_none_when_split_evenly():
+    events = [{"metadata": {"category": "ai"}}, {"metadata": {"category": "design"}}]
+    assert nodes._infer_category_filter(events) is None
+
+
+def test_infer_category_filter_ignores_events_without_category_metadata():
+    events = [{"metadata": None}, {"metadata": {"query": "python"}}, {"entity_type": "page"}]
+    assert nodes._infer_category_filter(events) is None
+
+
+@pytest.mark.asyncio
+async def test_retrieve_passes_inferred_filter_on_first_attempt():
+    events = [{"metadata": {"category": "ai"}}] * 3
+    with patch(
+        "app.agent.nodes.chroma_client.query_products",
+        return_value={"ids": [[]], "documents": [[]], "metadatas": [[]]},
+    ) as mock_query:
+        await nodes.retrieve({"interest_summary": "x", "raw_events": events, "retry_count": 0})
+
+    _, kwargs = mock_query.call_args
+    assert kwargs["where"] == {"category": "ai"}
+
+
+@pytest.mark.asyncio
+async def test_retrieve_drops_filter_when_refining():
+    events = [{"metadata": {"category": "ai"}}] * 3
+    with patch(
+        "app.agent.nodes.chroma_client.query_products",
+        return_value={"ids": [[]], "documents": [[]], "metadatas": [[]]},
+    ) as mock_query:
+        await nodes.retrieve({"interest_summary": "x", "raw_events": events, "retry_count": 1})
+
+    _, kwargs = mock_query.call_args
+    assert kwargs["where"] is None
+
+
 def test_evaluate_retrieval_true_when_results_present():
     assert nodes.evaluate_retrieval({"retrieved_products": [{"id": "p1"}]}) == {"retrieval_ok": True}
 

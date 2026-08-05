@@ -1,3 +1,5 @@
+import os
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -36,3 +38,10 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+if settings.langchain_tracing_v2:
+    # LangGraph traces every node automatically once these are set - no wrapper
+    # code needed (ARCHITECTURE.md §8). LangChain reads straight from os.environ.
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+    os.environ["LANGCHAIN_API_KEY"] = settings.langchain_api_key
+    os.environ["LANGCHAIN_PROJECT"] = settings.langchain_project

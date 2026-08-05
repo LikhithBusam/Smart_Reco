@@ -4,6 +4,7 @@ reasoning behind each node's behavior."""
 import hashlib
 import json
 import logging
+from collections import Counter
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
@@ -116,11 +117,28 @@ def _interest_cache_key(user_id: str, events: list[dict]) -> str:
     return f"interest_cache:{digest}"
 
 
+def _infer_category_filter(raw_events: list[dict]) -> dict | None:
+    """Retrieval polish (ARCHITECTURE.md §12 bonus): narrow to the category the
+    user has clearly been focused on, inferred from event metadata tracker.js
+    already sends. Needs a real majority, not just a plurality of 2."""
+    categories = [
+        e["metadata"]["category"] for e in raw_events if e.get("metadata") and e["metadata"].get("category")
+    ]
+    if len(categories) < 2:
+        return None
+    dominant, count = Counter(categories).most_common(1)[0]
+    if count / len(categories) <= 0.5:  # a tie isn't a majority
+        return None
+    return {"category": dominant}
+
+
 async def retrieve(state: AgentState) -> dict:
-    # ponytail: widening n_results is the whole "refine" strategy for now —
-    # smarter query rewriting is retrieval-polish (ARCHITECTURE.md §12 Phase 6), add if recall stays weak.
-    n_results = 5 * (state.get("retry_count", 0) + 1)
-    results = chroma_client.query_products(state["interest_summary"], n_results=n_results)
+    retry_count = state.get("retry_count", 0)
+    # Widening n_results and dropping the filter is the whole "refine" strategy —
+    # smarter query rewriting is a further upgrade, add if recall stays weak.
+    n_results = 5 * (retry_count + 1)
+    where = None if retry_count > 0 else _infer_category_filter(state.get("raw_events", []))
+    results = chroma_client.query_products(state["interest_summary"], n_results=n_results, where=where)
 
     ids = results["ids"][0] if results.get("ids") else []
     documents = results["documents"][0] if results.get("documents") else []
