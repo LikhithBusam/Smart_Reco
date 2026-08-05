@@ -1,29 +1,11 @@
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import fakeredis.aioredis
 import pytest
 
 from app.services import event_consumer
-
-
-def _mock_db() -> MagicMock:
-    """add_all() is sync on a real AsyncSession, commit() is async — mock
-    each accordingly so unawaited-coroutine warnings don't mask real bugs."""
-    db = MagicMock()
-    db.commit = AsyncMock()
-    return db
-
-
-class _FakeSessionCtx:
-    def __init__(self, db: AsyncMock):
-        self._db = db
-
-    async def __aenter__(self):
-        return self._db
-
-    async def __aexit__(self, *exc):
-        return False
+from tests.conftest import FakeSessionCtx, make_mock_db
 
 
 @pytest.fixture
@@ -58,11 +40,11 @@ async def test_consume_pending_events_drains_queue_and_increments_signal(fake_re
         ),
     )
 
-    mock_db = _mock_db()
+    mock_db = make_mock_db()
 
     with (
         patch("app.services.event_consumer.get_redis", return_value=fake_redis),
-        patch("app.services.event_consumer.AsyncSessionLocal", return_value=_FakeSessionCtx(mock_db)),
+        patch("app.services.event_consumer.AsyncSessionLocal", return_value=FakeSessionCtx(mock_db)),
     ):
         await event_consumer.consume_pending_events()
 
@@ -78,11 +60,11 @@ async def test_consume_pending_events_drains_queue_and_increments_signal(fake_re
 
 @pytest.mark.asyncio
 async def test_consume_pending_events_is_noop_on_empty_queue(fake_redis):
-    mock_db = _mock_db()
+    mock_db = make_mock_db()
 
     with (
         patch("app.services.event_consumer.get_redis", return_value=fake_redis),
-        patch("app.services.event_consumer.AsyncSessionLocal", return_value=_FakeSessionCtx(mock_db)),
+        patch("app.services.event_consumer.AsyncSessionLocal", return_value=FakeSessionCtx(mock_db)),
     ):
         await event_consumer.consume_pending_events()
 
@@ -93,11 +75,11 @@ async def test_consume_pending_events_is_noop_on_empty_queue(fake_redis):
 @pytest.mark.asyncio
 async def test_consume_pending_events_drops_malformed_payload_without_crashing(fake_redis):
     await fake_redis.lpush(event_consumer.EVENTS_QUEUE_KEY, "not-valid-json")
-    mock_db = _mock_db()
+    mock_db = make_mock_db()
 
     with (
         patch("app.services.event_consumer.get_redis", return_value=fake_redis),
-        patch("app.services.event_consumer.AsyncSessionLocal", return_value=_FakeSessionCtx(mock_db)),
+        patch("app.services.event_consumer.AsyncSessionLocal", return_value=FakeSessionCtx(mock_db)),
     ):
         await event_consumer.consume_pending_events()  # must not raise
 

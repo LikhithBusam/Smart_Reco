@@ -39,7 +39,11 @@ def test_access_token_round_trip_contains_subject_and_role():
 def test_decode_access_token_rejects_tampered_token():
     user_id = uuid.uuid4()
     token = create_access_token(user_id, "user")
-    tampered = token[:-1] + ("A" if token[-1] != "A" else "B")
+    # Flip a char well inside the payload, not the last char of the signature —
+    # base64's trailing padding bits are redundant and don't always change the
+    # decoded bytes, which makes a last-char flip flaky.
+    i = len(token) // 2
+    tampered = token[:i] + ("A" if token[i] != "A" else "B") + token[i + 1 :]
 
     with pytest.raises(jwt.PyJWTError):
         decode_access_token(tampered)

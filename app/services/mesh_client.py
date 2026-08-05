@@ -25,5 +25,12 @@ def embed_many(texts: list[str]) -> list[list[float]]:
     return [item.embedding for item in response.data]
 
 
-# chat() lands in Phase 4 alongside the LangGraph agent — analyze_interest and
-# generate_recommendation are the only two nodes allowed to call it.
+def chat(messages: list[dict], *, json_mode: bool = False) -> str:
+    """Only analyze_interest and generate_recommendation call this."""
+    kwargs = {"response_format": {"type": "json_object"}} if json_mode else {}
+    response = _client().chat.completions.create(
+        model=settings.mesh_chat_model,
+        messages=messages,
+        **kwargs,
+    )
+    return response.choices[0].message.content
