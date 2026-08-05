@@ -2,6 +2,8 @@
 ARCHITECTURE.md §5 for the shape and §6 for why the lock/reset matter."""
 
 import logging
+from datetime import datetime, timezone
+from uuid import UUID
 
 from langgraph.graph import END, START, StateGraph
 
@@ -19,6 +21,8 @@ from app.agent.nodes import (
     should_trigger,
 )
 from app.agent.state import AgentState
+from app.db.models import AgentRun
+from app.db.session import AsyncSessionLocal
 from app.services.redis_client import get_redis
 
 logger = logging.getLogger(__name__)
@@ -65,5 +69,25 @@ async def run_agent(user_id: str) -> dict | None:
     try:
         result = await compiled_graph.ainvoke({"user_id": user_id, "retry_count": 0})
         return result.get("recommendation")
+    except Exception:
+        # A node raising (Mesh network/auth error, etc.) must still leave a trace -
+        # discovered via a real live run against a bad key, not a mock.
+        logger.exception("Agent run crashed for user %s", user_id)
+        await _log_crashed_run(user_id)
+        return None
     finally:
         await redis_client.delete(lock_key)
+
+
+async def _log_crashed_run(user_id: str) -> None:
+    async with AsyncSessionLocal() as db:
+        db.add(
+            AgentRun(
+                user_id=UUID(user_id),
+                trigger_type="error",
+                status="failed",
+                started_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(timezone.utc),
+            )
+        )
+        await db.commit()

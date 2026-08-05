@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from sqlalchemy import (
     CheckConstraint,
+    DateTime,
     ForeignKey,
     Index,
     Numeric,
@@ -24,7 +25,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False, index=True)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
     role: Mapped[str] = mapped_column(String, nullable=False, default="user")
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class Product(Base):
@@ -36,8 +37,8 @@ class Product(Base):
     category: Mapped[str] = mapped_column(String, nullable=False, index=True)
     price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     is_deleted: Mapped[bool] = mapped_column(default=False)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
 class ProductSyncOutbox(Base):
@@ -54,8 +55,8 @@ class ProductSyncOutbox(Base):
     operation: Mapped[str] = mapped_column(String, nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False, default="pending")
     attempts: Mapped[int] = mapped_column(default=0)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    processed_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class Event(Base):
@@ -69,7 +70,7 @@ class Event(Base):
     entity_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     event_metadata: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
     session_id: Mapped[str | None] = mapped_column(String, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class AgentRun(Base):
@@ -86,8 +87,8 @@ class AgentRun(Base):
     status: Mapped[str] = mapped_column(String, nullable=False)
     retry_count: Mapped[int] = mapped_column(default=0)
     token_usage: Mapped[int | None] = mapped_column(nullable=True)
-    started_at: Mapped[datetime | None] = mapped_column(nullable=True)
-    completed_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class Recommendation(Base):
@@ -99,7 +100,7 @@ class Recommendation(Base):
     product_ids: Mapped[list[uuid.UUID]] = mapped_column(ARRAY(UUID(as_uuid=True)), nullable=False)
     trigger_reason: Mapped[str | None] = mapped_column(String, nullable=True)
     is_active: Mapped[bool] = mapped_column(default=True)
-    generated_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     agent_run_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("agent_runs.id"), nullable=True
     )
